@@ -1,4 +1,5 @@
 What i understood?
+
 **Before going to gateway api let me explain what i learned. So we keep our worker node in private subnet. Each pod get private ip. Which changes every time new pod come
 so we use service for this. Now to manage too many request from client to different microservices we use ingress it is like a receptionist it know where to send the 
 client request that we defined in the yaml file domain and how we want to route like path based or host based routing. But it is same like if we write manifest file 
