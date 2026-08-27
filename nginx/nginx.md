@@ -895,260 +895,267 @@ View error logs:
 sudo tail -f /var/log/nginx/error.log
 ```
 
-------------------------------------------------------------------------
+13. Using a Domain Name with Nginx
 
-# 12. Interview Questions
+Instead of accessing the server using:
 
-## Beginner
+http://SERVER_IP
 
-### 1. What is Nginx?
+you can use a domain such as:
 
-Nginx is a web server and reverse proxy server. It can serve static
-content, terminate TLS, load-balance traffic, and forward requests to
-backend applications.
+http://example.com
+Step 1 — Point the domain to your server
 
-### 2. What is the difference between a web server and a reverse proxy?
+In your domain/DNS provider, create an A record:
 
-A web server can directly serve content such as HTML, CSS, JavaScript,
-and images.
+Type: A
+Name: @
+Value: YOUR_SERVER_PUBLIC_IP
 
-A reverse proxy receives client requests and forwards them to backend
-servers/applications.
+For example:
 
-### 3. What is `nginx.conf`?
+example.com → 203.0.113.10
 
-It is the main Nginx configuration file.
+For www:
 
-Usually:
+Type: A
+Name: www
+Value: YOUR_SERVER_PUBLIC_IP
 
-``` text
-/etc/nginx/nginx.conf
-```
+Then:
 
-### 4. What is a `server` block?
+www.example.com → 203.0.113.10
 
-A `server` block defines configuration for a virtual server/website.
+You can verify DNS resolution:
 
-### 5. What is a `location` block?
+nslookup example.com
 
-A `location` block defines how Nginx handles requests matching a
-particular URI path.
+or:
 
-### 6. What is the purpose of `root`?
+dig example.com
+Step 2 — Configure server_name
 
-`root` tells Nginx where static files are located.
+Edit your site configuration:
 
-Example:
+sudo nano /etc/nginx/sites-available/default
 
-``` nginx
-root /var/www/html/demo;
-```
+Instead of:
 
-### 7. What is `server_name`?
+server_name _;
 
-It specifies the hostname/domain for which a server block should handle
-requests.
+use:
+
+server_name example.com www.example.com;
 
 Example:
-
-``` nginx
-server_name example.com;
-```
-
-### 8. What is `proxy_pass`?
-
-`proxy_pass` tells Nginx to forward a request to another
-server/application.
-
-Example:
-
-``` nginx
-proxy_pass http://127.0.0.1:3000;
-```
-
-------------------------------------------------------------------------
-
-## Intermediate
-
-### 9. What is the difference between `reload` and `restart`?
-
-`reload` loads the new configuration while keeping the existing Nginx
-service running.
-
-`restart` stops and starts the service again.
-
-For normal configuration changes:
-
-``` bash
-sudo nginx -t
-sudo systemctl reload nginx
-```
-
-is generally preferred.
-
-### 10. What are `sites-available` and `sites-enabled`?
-
-`sites-available` contains available site configurations.
-
-`sites-enabled` contains configurations that are enabled and loaded by
-Nginx.
-
-On Debian/Ubuntu, `sites-enabled` commonly contains symbolic links to
-`sites-available`.
-
-### 11. How do you check whether an Nginx configuration is valid?
-
-``` bash
-sudo nginx -t
-```
-
-### 12. Where are Nginx logs?
-
-Usually:
-
-``` text
-/var/log/nginx/access.log
-/var/log/nginx/error.log
-```
-
-### 13. How can Nginx host multiple websites?
-
-Using multiple `server` blocks with different `server_name` values.
-
-Example:
-
-``` nginx
-server {
-    listen 80;
-    server_name site1.com;
-    ...
-}
 
 server {
     listen 80;
-    server_name site2.com;
-    ...
+    listen [::]:80;
+
+    server_name example.com www.example.com;
+
+    root /var/www/html/demo;
+    index index.html;
+
+    location / {
+        try_files $uri $uri/ =404;
+    }
 }
-```
 
-### 14. What happens when a user requests `/about`?
+Now:
 
-Nginx first determines the appropriate `server` block and then selects
-the matching `location` block.
+http://example.com/
 
-If serving static files, the URL is mapped against the configured
-`root`.
+will be handled by this server block.
 
-Example:
-
-``` text
-root: /var/www/html/demo
-URL:  /about/
-```
-
-Result:
-
-``` text
-/var/www/html/demo/about/
-```
-
-### 15. Why do we run `nginx -t` before reload?
-
-To verify that the configuration syntax is valid before applying it.
-This helps avoid reloading a broken configuration.
-
-------------------------------------------------------------------------
-
-# 13. Quick Revision
-
-``` text
-Install
-   ↓
-apt install nginx
-   ↓
-nginx.conf
-   ↓
-events + http
-   ↓
-server
-   ↓
-location
-```
-
-### Static website
-
-``` text
-Browser
-   ↓
-Nginx
-   ↓
-root
-   ↓
-HTML/CSS/JS files
-```
-
-### Reverse proxy
-
-``` text
-Browser
-   ↓
-Nginx
-   ↓
-proxy_pass
-   ↓
-Backend application
-```
-
-### Important commands
-
-``` bash
-sudo systemctl start nginx
-sudo systemctl stop nginx
-sudo systemctl restart nginx
-sudo systemctl reload nginx
-sudo systemctl status nginx
+Test:
 
 sudo nginx -t
-```
 
-### Important paths
+Then:
 
-``` text
-/etc/nginx/nginx.conf
-/etc/nginx/sites-available/
-/etc/nginx/sites-enabled/
-/etc/nginx/conf.d/
-/var/www/html/
-/var/log/nginx/access.log
-/var/log/nginx/error.log
-```
+sudo systemctl reload nginx
+14. Secure the Domain with Let's Encrypt
 
-### Most important mental model
+HTTP:
 
-``` text
-Client
-  ↓
-Nginx
-  ↓
-server block
-  ↓
-location block
-  ↓
- ┌──────────────────┐
- │                  │
-root             proxy_pass
- │                  │
- ↓                  ↓
-Static files      Backend
-```
+http://example.com
 
-**Remember:**
+is not encrypted.
 
-> `server` decides **which website/server configuration** handles the
-> request.
+We want:
 
-> `location` decides **how a particular URL/path is handled**.
+https://example.com
 
-> `root` tells Nginx **where static files are located**.
+with a valid TLS certificate.
 
-> `proxy_pass` tells Nginx **where to forward the request**.
+Let's Encrypt provides free TLS certificates.
+
+A common way to obtain and configure them with Nginx is Certbot.
+
+Step 1 — Install Certbot
+
+Ubuntu/Debian:
+
+sudo apt update
+sudo apt install certbot python3-certbot-nginx
+
+Check:
+
+certbot --version
+Step 2 — Make sure HTTP is working first
+
+Before requesting the certificate, make sure:
+
+http://example.com
+
+works correctly.
+
+Also make sure port 80 and 443 are allowed through your firewall/security group.
+
+Step 3 — Request the certificate
+
+Run:
+
+sudo certbot --nginx -d example.com -d www.example.com
+
+Certbot will:
+
+Verify that you control the domain.
+Obtain the Let's Encrypt certificate.
+Configure Nginx for HTTPS.
+Usually create an HTTP → HTTPS redirect if you choose that option.
+
+Afterward:
+
+http://example.com
+       ↓
+   redirect
+       ↓
+https://example.com
+       ↓
+     Nginx
+15. Where are the Let's Encrypt Certificates?
+
+Certbot normally stores them under:
+
+/etc/letsencrypt/live/example.com/
+
+Important files:
+
+fullchain.pem
+privkey.pem
+fullchain.pem
+
+This is the public certificate chain.
+
+privkey.pem
+
+This is the private key.
+
+Never share privkey.pem.
+
+You can check the files:
+
+sudo ls -l /etc/letsencrypt/live/example.com/
+16. Configure Certificate Paths in Nginx
+
+After Certbot configuration, the HTTPS server block will contain something similar to:
+
+server {
+    listen 443 ssl;
+    listen [::]:443 ssl;
+
+    server_name example.com www.example.com;
+
+    root /var/www/html/demo;
+    index index.html;
+
+    ssl_certificate /etc/letsencrypt/live/example.com/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/example.com/privkey.pem;
+
+    location / {
+        try_files $uri $uri/ =404;
+    }
+}
+
+The important lines are:
+
+ssl_certificate /etc/letsencrypt/live/example.com/fullchain.pem;
+
+ssl_certificate_key /etc/letsencrypt/live/example.com/privkey.pem;
+
+You can put these in the relevant HTTPS server block. They don't normally need to go into the global nginx.conf.
+
+17. HTTP → HTTPS Redirect
+
+Usually you don't want users to continue using:
+
+http://example.com
+
+Instead, redirect HTTP to HTTPS:
+
+server {
+    listen 80;
+    listen [::]:80;
+
+    server_name example.com www.example.com;
+
+    return 301 https://$host$request_uri;
+}
+
+Then your HTTPS server:
+
+server {
+    listen 443 ssl;
+    listen [::]:443 ssl;
+
+    server_name example.com www.example.com;
+
+    root /var/www/html/demo;
+    index index.html;
+
+    ssl_certificate /etc/letsencrypt/live/example.com/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/example.com/privkey.pem;
+
+    location / {
+        try_files $uri $uri/ =404;
+    }
+}
+
+The complete flow becomes:
+
+                    DNS
+                     │
+example.com ─────────┘
+                     │
+                     ▼
+                Server :80
+                     │
+                     │ 301 Redirect
+                     ▼
+                Server :443
+                     │
+              TLS Certificate
+                     │
+                     ▼
+                   Nginx
+                     │
+                     ▼
+              /var/www/html/demo
+18. Certificate Renewal
+
+Let's Encrypt certificates are short-lived, so automatic renewal is important.
+
+Check Certbot's renewal configuration:
+
+sudo systemctl status certbot.timer
+
+You can test renewal without actually renewing:
+
+sudo certbot renew --dry-run
+
+If the dry run succeeds, automatic renewal should be working.
+------------------------------------------------------------------------
+
