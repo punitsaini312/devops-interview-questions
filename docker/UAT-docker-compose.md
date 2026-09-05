@@ -1,6 +1,4 @@
-Yes. This is worth keeping as a **separate short interview/learning note**, because it demonstrates that you actually handled a UAT deployment rather than only knowing Docker commands.
-
-One small correction in your command sequence: after `gzip`, you can load the `.tar.gz` directly with Docker:
+This is how we used to deploy our code on UAT environment
 
 ```bash
 docker load -i kwt-auth-1.5.tar.gz
