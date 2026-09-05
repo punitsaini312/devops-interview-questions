@@ -56,9 +56,45 @@ requirements.txt
  application code
 ```
 
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+**Why we use multi stage dockerfile?**
+
+"Multi-stage Docker builds are used to keep the final Docker image small and clean.
+
+For example, while building an application, I may need things like compilers, development tools, or build dependencies. I don't need all of those things to run the application.
+
+So, I use one stage to build the application and another stage to run it. In the final stage, I copy only what is needed to run the application.
+
+This helps reduce the image size, makes the container faster to download and start, and also removes unnecessary tools from the final image."**
+
 **Dependency changes → reinstall.**
 
 **Only code changes → reuse cached dependencies.**
 
+
+# ===== Build Stage ===== 
+FROM maven:3.9.9-eclipse-temurin-17 AS build 
+WORKDIR /app 
+# Copy pom.xml first to leverage Docker layer caching 
+COPY pom.xml . 
+# Pre-download dependencies (faster rebuilds) 
+RUN mvn -B -q -DskipTestsdependency:go-offline 
+# Copy project source 
+COPY src ./src
+# Build the JAR (skip tests for faster build) 
+RUN mvn clean package -DskipTests
+
+# ===== Runtime Stage ===== 
+FROM eclipse-temurin:17-jre-alpine 
+WORKDIR /app # Copy built jar from build stage
+COPY --from=build /app/target/*.jar app.jar 
+# Expose app port
+EXPOSE 8080 #
+Run the app ENTRYPOINT ["java", "-jar", "app.jar"]
+
+the main benefit is that the final image contains only what is needed to run the application, rather than all the Maven and build-related stuff. 
+This keeps the image smaller and cleaner.
+
+"I use the first stage to build my application and the second stage only to run it. I don't need Maven in the final image, so I copy only the generated JAR into the runtime image. This keeps the final image smaller and cleaner."
 
 
