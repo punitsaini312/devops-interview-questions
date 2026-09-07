@@ -333,7 +333,7 @@ Shows running processes and helps me see whether CPU or memory usage is high.
 **Command:**
 
 ```bash
-top
+top, htop and btop
 ```
 
 Look for:
