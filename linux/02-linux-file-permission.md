@@ -513,3 +513,12 @@ find /var/www -perm 0777
 ✓ **Default Permissions Calculation**: `666 - umask` for files, `777 - umask` for directories.
 
 ✓ Use **ACL (`getfacl` / `setfacl`)** when standard owner/group model is too restrictive.
+
+
+
+Presets you'll type constantly
+Mode	Use case
+755	Scripts and executables anyone can run
+644	Configs and text files anyone can read
+700	Directory only the owner should enter
+600	Secrets: SSH keys, API tokens, .env files
