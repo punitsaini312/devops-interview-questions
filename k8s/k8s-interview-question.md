@@ -1,11 +1,4 @@
-Yes. Since your resume explicitly says **50+ microservices in production Kubernetes environments (GKE/EKS)** and mentions Helm, Istio, ConfigMaps, External Secrets, PVCs, troubleshooting, and stateful services, I would prepare Kubernetes quite deeply. Punit_Saini_DevOps_Resume Punit_Saini_DevOps_Resume
 
-I suggest we build your GitHub repository in **two stages**:
-
-1. **Part 1 — Theoretical / conceptual questions** → what we're doing now.
-2. **Part 2 — Scenario/troubleshooting questions** → CrashLoopBackOff, OOMKilled, Pending pods, ImagePullBackOff, service not reachable, PVC issues, etc.
-
-For Part 1, don't try to memorize huge textbook answers. Your answers should sound like **you have actually worked with Kubernetes**.
 
 # Kubernetes Interview Question Repository — Part 1
 
